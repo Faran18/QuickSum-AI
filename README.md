@@ -55,7 +55,6 @@ Usage
 1. Clone the repository:
 
     git clone https://github.com/Faran18/QuickSum-AI.git
-    cd text-summarizer-app
 
 2. Run the Streamlit app:
 
