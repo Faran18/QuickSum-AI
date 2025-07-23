@@ -5,6 +5,7 @@ import streamlit as st
 from transformers import pipeline
 from PyPDF2 import PdfReader
 from docx import Document
+from pyngrok import ngrok
 
 SUMMARIZATION_MODELS = {
     "BART Large CNN": "facebook/bart-large-cnn",
