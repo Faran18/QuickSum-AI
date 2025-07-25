@@ -11,7 +11,7 @@ Features
 - Manual Text Input: Paste or type text directly for summarization.
 - File Upload: Upload multiple text files (.txt, .pdf, .docx) for batch summarization.
 - Multiple Models: Choose from several pre-trained summarization models including:
-  - BART Large CNN (facebook/bart-large-cnn)
+  - Pegasus XSUM (google/pegasus-xsum)
   - T5 Small (t5-small)
   - DistilBART CNN (sshleifer/distilbart-cnn-12-6)
 - Long Text Support: Automatically splits long documents into chunks before summarizing.
@@ -84,7 +84,7 @@ Supported Models
 
 | Model Name       | Hugging Face Model ID               | Advantage                          |
 |------------------|-----------------------------------|--------------------------------|
-| BART Large CNN   | facebook/bart-large-cnn           | Strong summarization baseline  |
+| Pegasus XSUM     | google/pegasus-xsum           | Strong summarization baseline  |
 | T5 Small         | t5-small                         | Lightweight, faster inference  |
 | DistilBART CNN   | sshleifer/distilbart-cnn-12-6     | Smaller, faster variant         |
 
