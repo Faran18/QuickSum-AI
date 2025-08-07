@@ -14,13 +14,10 @@ SUMMARIZATION_MODELS = {
 
 @st.cache_resource
 def initialize_summarizer(model_name: str):
-    st.write(f"Loading {model_name} model...")
     try:
         summarizer = pipeline("summarization", model=model_name)
-        st.success(f"{model_name} model loaded!")
         return summarizer
-    except Exception as e:
-        st.error(f"Error initializing summarizer model '{model_name}': {str(e)}")
+    except Exception:
         return None
 
 def clean_text(text):
@@ -39,6 +36,15 @@ def chunk_text(text, max_words=1024):
     for i in range(0, len(words), max_words):
         yield ' '.join(words[i:i+max_words])
 
+# New helper to ensure valid summary lengths
+
+def _normalize_summary_lengths(max_length, min_length):
+    max_length = max(1, int(max_length))
+    min_length = max(0, int(min_length))
+    if min_length >= max_length:
+        min_length = max(0, max_length - 1)
+    return max_length, min_length
+
 def summarize_text(text, model_name, max_length=200, min_length=100):
     summarizer = initialize_summarizer(model_name)
     if not summarizer:
@@ -46,15 +52,39 @@ def summarize_text(text, model_name, max_length=200, min_length=100):
     text = clean_text(text)
     if not text:
         return "Error: Input text is empty."
+
+    # Ensure lengths are valid to avoid runtime errors in the pipeline
+    max_length, min_length = _normalize_summary_lengths(max_length, min_length)
+
     try:
-        if len(text.split()) <= 1024:
-            summary = summarizer(text, max_length=max_length, min_length=min_length, do_sample=False, num_beams=4)
+        total_words = len(text.split())
+        if total_words <= 1024:
+            effective_max = max(1, min(max_length, total_words - 1))
+            effective_min = min(min_length, max(0, effective_max - 1))
+            summary = summarizer(
+                text,
+                max_length=effective_max,
+                min_length=effective_min,
+                do_sample=False,
+                num_beams=4,
+                truncation=True,
+            )
             return remove_duplicates(summary[0]['summary_text'])
         else:
             chunks = list(chunk_text(text))
             summaries = []
             for chunk in chunks:
-                summary = summarizer(chunk, max_length=max_length, min_length=min_length, do_sample=False, num_beams=4)
+                words_in_chunk = len(chunk.split())
+                effective_max = max(1, min(max_length, words_in_chunk - 1))
+                effective_min = min(min_length, max(0, effective_max - 1))
+                summary = summarizer(
+                    chunk,
+                    max_length=effective_max,
+                    min_length=effective_min,
+                    do_sample=False,
+                    num_beams=4,
+                    truncation=True,
+                )
                 summaries.append(summary[0]['summary_text'])
             combined_summary = ' '.join(summaries)
             return remove_duplicates(combined_summary)
@@ -70,7 +100,7 @@ def summarize_file(uploaded_file, model_name, max_length=200, min_length=100):
             doc = Document(uploaded_file)
             text = " ".join(paragraph.text for paragraph in doc.paragraphs)
         else:
-            text = uploaded_file.read().decode('utf-8')
+            text = uploaded_file.read().decode('utf-8', errors='ignore')
         return summarize_text(text, model_name, max_length, min_length)
     except Exception as e:
         return f"Error processing file: {str(e)}"
